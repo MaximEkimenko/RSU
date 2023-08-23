@@ -1,16 +1,24 @@
 import datetime
+import os
 
+import madmodule
 
-time_now_str = datetime.datetime.now().strftime("%d.%m.%Y %H:%M")
-time_now = datetime.datetime.strptime(time_now_str, "%d.%m.%Y %H:%M")
-
-yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%d.%m.%Y')
+reset_time_interval_start = datetime.datetime.strptime("14:00", "%H:%M")
+reset_time_interval_end = datetime.datetime.strptime("14:30", "%H:%M")
+time_now_str = datetime.datetime.now().strftime("%H:%M")
+time_now = datetime.datetime.strptime(time_now_str, "%H:%M")
 today = datetime.datetime.now().strftime('%d.%m.%Y')  # сегодня
-reset_time = datetime.datetime.strptime(yesterday + " " + "00:10", "%d.%m.%Y %H:%M")
+
+
+# print(datetime.datetime.strptime("00:00", "%H:%M"))
+#
+#
+# print(reset_time_interval_start)
+# print(reset_time_interval_end)
+# print(time_now)
+#
+# print(reset_time_interval_end > time_now > reset_time_interval_start)
 
 
 
-print(reset_time)
-print(time_now)
-
-print(time_now > reset_time)
+print(madmodule.create_list(os.getcwd(), result_type='files', extension=f'{today}.xlsx'))

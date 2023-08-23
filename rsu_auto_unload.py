@@ -1,10 +1,19 @@
 import datetime
+import logging
 import os
 import time
 import openpyxl
 import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from madmodule import create_list
+import shutil
+
+logging.basicConfig(level=logging.DEBUG, filename='log.txt', filemode="a+",
+                    format="%(asctime)-15s %(levelname)-8s %(message)s")
+logger = logging.getLogger('logger')
+logger.setLevel(logging.CRITICAL)
+# logging.disable(logging.CRITICAL)
 
 
 def auto_unload():
@@ -18,7 +27,6 @@ def auto_unload():
         time_now = datetime.datetime.strptime(time_now_str, "%H:%M")
         print(f'Запуск в {time_now_str}.')
         today = datetime.datetime.now().strftime('%d.%m.%Y')  # сегодня
-        yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%d.%m.%Y')
         # словарь РСУ
         rsu = {'1-1': {'ip': 'https://192.168.10.111/documentation/documentation.html', 'location': 'R1'},
                '2-1': {'ip': 'https://192.168.10.138/documentation/documentation.html', 'location': 'R1'},
@@ -33,6 +41,7 @@ def auto_unload():
         options = webdriver.ChromeOptions()
         options.add_argument("--headless")  # включение headless режима
         options.add_argument('--ignore-certificate-errors')  # отключение сообщений ошибки сертификатов
+        options.add_experimental_option('excludeSwitches', ['enable-logging'])
         driver = webdriver.Chrome(options=options)  # назначение драйвера
         for rsu_name in rsu.keys():
             result_file_name = rf"{os.getcwd()}\Выгрузка РСУ {rsu_name} за {today}.xlsx"  # имя xlsx файла
@@ -107,21 +116,23 @@ def auto_unload():
 
             except Exception as e:
                 print(e)
-
-            reset_time_interval_start = datetime.datetime.strptime("00:01", "%H:%M")
-            reset_time_interval_end = datetime.datetime.strptime("00:41", "%H:%M")
-            temp_file_name = rf"U:\Выгрузка РСУ {rsu_name} за {yesterday}.xlsx"  # имя xlsx копии в темп
-            # сохранение результатов в Temp при попадании в reset_time интервал
-            if reset_time_interval_end > time_now > reset_time_interval_start:
-                try:
-                    res_wb.save(temp_file_name)
-                    print(f'{temp_file_name} copied!')
-                    rsu_previews_data = {'1-1': set(), '2-1': set(), '3-1': set(), '4-1': set(), '4-2': set(),
-                                         '4-3': set(),
-                                         '4-4': set(), '5-1': set(), '6-1': set()}
-                    print(f'rsu_previews_data reset complete!')
-                except Exception as e:
-                    print(e)
+        reset_time_interval_start = datetime.datetime.strptime("00:01", "%H:%M")
+        reset_time_interval_end = datetime.datetime.strptime("00:41", "%H:%M")
+        yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%d.%m.%Y')  # вчера
+        # сохранение результатов в Temp при попадании в reset_time интервал
+        if reset_time_interval_end > time_now > reset_time_interval_start:
+            try:
+                file_list = create_list(dir_path=os.getcwd(), result_type='files', extension=f'{yesterday}.xlsx')
+                print(file_list)
+                for file_name in file_list:
+                    shutil.copy(file_name, r"U:\\")
+                    print(f'{file_name} copied!')
+                rsu_previews_data = {'1-1': set(), '2-1': set(), '3-1': set(), '4-1': set(), '4-2': set(),
+                                     '4-3': set(),
+                                     '4-4': set(), '5-1': set(), '6-1': set()}
+                print(f'rsu_previews_data reset complete!')
+            except Exception as e:
+                print(e, "ФАЙЛЫ НЕ СКОПИРОВАНЫ!")
         print('Итерация пройдена, ожидание следующей. Запуск через 2 минуты.')
 
         time.sleep(2 * 60)
