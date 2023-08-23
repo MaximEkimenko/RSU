@@ -108,9 +108,11 @@ def auto_unload():
             except Exception as e:
                 print(e)
 
-            reset_time = datetime.datetime.strptime("00:10", "%H:%M")
+            reset_time_interval_start = datetime.datetime.strptime("00:01", "%H:%M")
+            reset_time_interval_end = datetime.datetime.strptime("00:41", "%H:%M")
             temp_file_name = rf"U:\Выгрузка РСУ {rsu_name} за {yesterday}.xlsx"  # имя xlsx копии в темп
-            if time_now > reset_time:  # сохранение результатов в Temp при достижении reset_time
+            # сохранение результатов в Temp при попадании в reset_time интервал
+            if reset_time_interval_end > time_now > reset_time_interval_start:
                 try:
                     res_wb.save(temp_file_name)
                     print(f'{temp_file_name} copied!')
