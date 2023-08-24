@@ -12,7 +12,7 @@ import shutil
 logging.basicConfig(level=logging.DEBUG, filename='log.txt', filemode="a+",
                     format="%(asctime)-15s %(levelname)-8s %(message)s")
 logger = logging.getLogger('logger')
-logger.setLevel(logging.CRITICAL)
+# logger.setLevel(logging.CRITICAL)
 # logging.disable(logging.CRITICAL)
 
 
