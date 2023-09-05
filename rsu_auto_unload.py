@@ -9,23 +9,13 @@ from selenium import webdriver
 from selenium.webdriver.common.actions.action_builder import ActionBuilder
 from selenium.webdriver.common.by import By
 import warnings
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support.wait import WebDriverWait
 
-caps = DesiredCapabilities().CHROME
-caps["pageLoadStrategy"] = "none"
-
-warnings.filterwarnings('ignore')
-# from madmodule import create_list
-# import shutil
-
+warnings.filterwarnings('ignore')  # игнорирование предупреждений
+# logging
 logging.basicConfig(level=logging.ERROR, filename='log.txt', filemode="a+",
                     format="%(asctime)-15s %(levelname)-8s %(message)s")
 logger = logging.getLogger('logger')
-
-
-# logger.setLevel(logging.CRITICAL)
-# logging.disable(logging.CRITICAL)
 
 
 def auto_unload():
@@ -59,10 +49,7 @@ def auto_unload():
         except Exception as e:
             print(e, 'Ошибка создания webdriver. Отсутствует связь.')
         try:
-            # driver.set_page_load_timeout(40)
-            # driver.set_script_timeout(40)
             driver.implicitly_wait(10)
-            # driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
         except Exception as e:
             print(e, 'Ошибка timeout!')
         for rsu_name in rsu.keys():
@@ -155,15 +142,13 @@ def auto_unload():
                         arc_value = time_sum / 60 / 60 + float(arc_sum_before)  # значение дуги
                         print(arc_value, rsu_name)
                         # заполнение листа результатов
-                        # sum_result_sh.append([round(time_sum / 60 / 60, 2)])  # значение в первую ячейку для тестов
-                        # sum_str = sum_str + ' + ' + f"{round(time_sum / 60 / 60, 2)}"
-                        # заполнение суммы дуги с учётом предыдущих итераций
                         sum_result_sh['A2'] = today
                         sum_result_sh['D2'] = rsu_name
                         sum_result_sh['G2'] = rsu[rsu_name]['location']
                         # print(rsu[rsu_name]['location'])
                         sum_result_sh['H2'] = round(arc_value, 2)
                         sum_result_sh['I2'] = 4
+                        # строка со значениями итераций дял тестов
                         sum_result_sh['J2'] = str(sum_result_sh['J2'].value) + '+' + f"{round(time_sum / 60 / 60, 2)}"
                         time.sleep(5)
                         if is_updated:
@@ -171,16 +156,13 @@ def auto_unload():
                             print(f'Файл {result_file_name} обновлен.')
                         else:
                             print(f'Данные не изменились. Файл {result_file_name} НЕ обновлен.')
-                        ActionBuilder(driver).clear_actions()
-                        # driver.close()
+                        ActionBuilder(driver).clear_actions()  # сброс значений действий драйвера
                     else:
                         print(rsu_name, 'Недоступен.')
-
             except Exception as e:
                 print(e)
         reset_time_interval_start = datetime.datetime.strptime("00:01", "%H:%M")
         reset_time_interval_end = datetime.datetime.strptime("00:21", "%H:%M")
-        yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%d.%m.%Y')  # вчера
         # сброс previews data
         if reset_time_interval_end > time_now > reset_time_interval_start:
             try:
@@ -196,8 +178,7 @@ def auto_unload():
             except Exception as e:
                 print(e, "rsu_previews_data reset NOT complete!")
         print('Итерация пройдена, ожидание следующей. Запуск через 2 минуты.')
-
-        time.sleep(2 * 60)
+        time.sleep(2 * 60)  # период ожидания след итерации
 
 
 if __name__ == '__main__':
