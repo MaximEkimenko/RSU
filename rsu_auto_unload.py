@@ -30,6 +30,12 @@ def auto_unload():
         today = datetime.datetime.now().strftime('%d.%m.%Y')  # сегодня
         print(f'Запуск в {time_now_str}. {today}.')
         # словарь РСУ
+
+        try:
+            driver.close()
+        except Exception as e:
+            print(e, 'Драйвер уже закрыт.')
+
         rsu = {'1-1': {'ip': 'https://192.168.10.111/documentation/documentation.html', 'location': 'R1'},
                '2-1': {'ip': 'https://192.168.10.138/documentation/documentation.html', 'location': 'R1'},
                '3-1': {'ip': 'https://192.168.10.113/documentation/documentation.html', 'location': 'R2'},
@@ -82,7 +88,10 @@ def auto_unload():
                                                         max_col=res_sh.max_column, values_only=True):
                                 rsu_previews_data[rsu_name].add(row[5])
                                 # print(row[5])
-                            print('Существующие данные перенесены!')
+                            if rsu_previews_data:
+                                print('Существующие данные перенесены.')
+                            else:
+                                print('Данные для переноса отсутствуют.')
                         else:
                             res_wb = openpyxl.Workbook()
                             res_sh = res_wb.create_sheet('Выгрузка РСУ')  # листа выгрузки
@@ -177,7 +186,7 @@ def auto_unload():
                 print(f'rsu_previews_data reset complete!')
             except Exception as e:
                 print(e, "rsu_previews_data reset NOT complete!")
-        print('Итерация пройдена, ожидание следующей. Запуск через 2 минуты.')
+        print(f'Итерация пройдена {time_now_str} {today}, ожидание следующей. Запуск через 2 минуты.')
         time.sleep(2 * 60)  # период ожидания след итерации
 
 
