@@ -10,42 +10,57 @@ from selenium.webdriver.common.actions.action_builder import ActionBuilder
 from selenium.webdriver.common.by import By
 import warnings
 from selenium.webdriver.support.wait import WebDriverWait
-
-warnings.filterwarnings('ignore')  # игнорирование предупреждений
-# logging
-logging.basicConfig(level=logging.ERROR, filename='log.txt', filemode="a+",
-                    format="%(asctime)-15s %(levelname)-8s %(message)s")
-logger = logging.getLogger('logger')
+import json
 
 
 def auto_unload():
-    # TODO добавить логи вместо prints
+    warnings.filterwarnings('ignore')  # игнорирование предупреждений
+    # logging # TODO добавить логи вместо prints
+    logging.basicConfig(level=logging.ERROR, filename='log.txt', filemode="a+",
+                        format="%(asctime)-15s %(levelname)-8s %(message)s")
+    logger = logging.getLogger('logger')
+
     # инициализация словаря предыдущих значений
     rsu_previews_data = {'1-1': set(), '2-1': set(), '3-1': set(), '4-1': set(), '4-2': set(), '4-3': set(),
                          '4-4': set(), '5-1': set(), '6-1': set()}
-    # бесконечный цикл
+    # словарь РСУ
+    rsu = {'1-1': {'ip': 'https://192.168.10.111/documentation/documentation.html', 'location': 'R1'},
+           '2-1': {'ip': 'https://192.168.10.138/documentation/documentation.html', 'location': 'R1'},
+           '3-1': {'ip': 'https://192.168.10.113/documentation/documentation.html', 'location': 'R2'},
+           '4-1': {'ip': 'https://192.168.10.114/documentation/documentation.html', 'location': 'R2'},
+           '4-2': {'ip': 'https://192.168.10.115/documentation/documentation.html', 'location': 'R2'},
+           '4-3': {'ip': 'https://192.168.10.116/documentation/documentation.html', 'location': 'R2'},
+           '4-4': {'ip': 'https://192.168.10.117/documentation/documentation.html', 'location': 'R2'},
+           '5-1': {'ip': 'https://192.168.10.137/documentation/documentation.html', 'location': 'R1'},
+           '6-1': {'ip': 'https://192.168.10.112/documentation/documentation.html', 'location': 'R2'},
+           }
+
+    # бесконечный цикл для опроса РСУ
     while True:
         time_now_str = datetime.datetime.now().strftime("%H:%M")
         time_now = datetime.datetime.strptime(time_now_str, "%H:%M")
         today = datetime.datetime.now().strftime('%d.%m.%Y')  # сегодня
         print(f'Запуск в {time_now_str}. {today}.')
-        # словарь РСУ
-
-        try:
+        PID = os.getpid()  # id для определения процессов
+        PARENT_PID = os.getppid()  # id для определения родительских процессов
+        print(f'PID = {PID}')
+        print(f'Parent PID = {PARENT_PID}')
+        feedback_list = {'datetime': str(datetime.datetime.now()), 'PID': PID, 'PARENT_PID': PARENT_PID}
+        try:  # создание файла обратной связи для контроля зависания
+            r_filename = r"O:\Расчет эффективности\Выгрузки РСУ\r.json"  # файл контроля зависания
+            with open(r_filename, 'w') as file:
+                file.write(json.dumps(feedback_list))
+                print('Файл обратной связи создан.\n')
+                # file.write(str(feedback_list))
+                # file.write(str(datetime.datetime.now()))
+                # file.write(str(PID))
+                # file.write(str(PARENT_PID))
+        except Exception as e:
+            print(e, 'Ошибка создания файла обратной связи!\n')
+        try:  # закрытие драйвера
             driver.close()
         except Exception as e:
             print(e, 'Драйвер уже закрыт.')
-
-        rsu = {'1-1': {'ip': 'https://192.168.10.111/documentation/documentation.html', 'location': 'R1'},
-               '2-1': {'ip': 'https://192.168.10.138/documentation/documentation.html', 'location': 'R1'},
-               '3-1': {'ip': 'https://192.168.10.113/documentation/documentation.html', 'location': 'R2'},
-               '4-1': {'ip': 'https://192.168.10.114/documentation/documentation.html', 'location': 'R2'},
-               '4-2': {'ip': 'https://192.168.10.115/documentation/documentation.html', 'location': 'R2'},
-               '4-3': {'ip': 'https://192.168.10.116/documentation/documentation.html', 'location': 'R2'},
-               '4-4': {'ip': 'https://192.168.10.117/documentation/documentation.html', 'location': 'R2'},
-               '5-1': {'ip': 'https://192.168.10.137/documentation/documentation.html', 'location': 'R1'},
-               '6-1': {'ip': 'https://192.168.10.112/documentation/documentation.html', 'location': 'R2'},
-               }
         options = webdriver.ChromeOptions()
         options.add_argument("--headless")  # включение headless режима
         options.add_argument('--ignore-certificate-errors')  # отключение сообщений ошибки сертификатов
@@ -53,7 +68,7 @@ def auto_unload():
         try:
             driver = webdriver.Chrome(options=options)  # назначение драйвера
         except Exception as e:
-            print(e, 'Ошибка создания webdriver. Отсутствует связь.')
+            print(e, 'Ошибка создания webdriver. Отсутствует связь.\n')
         try:
             driver.implicitly_wait(10)
         except Exception as e:
@@ -72,7 +87,7 @@ def auto_unload():
                     print(e)
                     req = None
                     req_status = False
-                    print(rsu_name, 'Недоступен.')
+                    print(rsu_name, 'Недоступен.\n')
                 if req_status:  # если страница открылась
                     is_updated = False  # переменная факта обновления данных
                     if req.status_code == 200:  # если страница загрузилась
@@ -89,9 +104,9 @@ def auto_unload():
                                 rsu_previews_data[rsu_name].add(row[5])
                                 # print(row[5])
                             if rsu_previews_data:
-                                print('Существующие данные перенесены.')
+                                print('Существующие данные перенесены.\n')
                             else:
-                                print('Данные для переноса отсутствуют.')
+                                print('Данные для переноса отсутствуют.\n')
                         else:
                             res_wb = openpyxl.Workbook()
                             res_sh = res_wb.create_sheet('Выгрузка РСУ')  # листа выгрузки
@@ -162,12 +177,13 @@ def auto_unload():
                         time.sleep(5)
                         if is_updated:
                             res_wb.save(result_file_name)
-                            print(f'Файл {result_file_name} обновлен.')
+                            print(f'Файл {result_file_name} обновлен.\n')
                         else:
-                            print(f'Данные не изменились. Файл {result_file_name} НЕ обновлен.')
+                            print(f'Данные не изменились. Файл {result_file_name} НЕ обновлен.\n')
                         ActionBuilder(driver).clear_actions()  # сброс значений действий драйвера
                     else:
                         print(rsu_name, 'Недоступен.')
+
             except Exception as e:
                 print(e)
         reset_time_interval_start = datetime.datetime.strptime("00:01", "%H:%M")
@@ -175,18 +191,13 @@ def auto_unload():
         # сброс previews data
         if reset_time_interval_end > time_now > reset_time_interval_start:
             try:
-                # file_list = create_list(dir_path=os.getcwd(), result_type='files', extension=f'{yesterday}.xlsx')
-                # print(file_list)
-                # for file_name in file_list:
-                #     shutil.copy(file_name, r"O:\Расчет эффективности\Выгрузки РСУ")
-                #     print(f'{file_name} copied!')
                 rsu_previews_data = {'1-1': set(), '2-1': set(), '3-1': set(), '4-1': set(), '4-2': set(),
                                      '4-3': set(),
                                      '4-4': set(), '5-1': set(), '6-1': set()}
                 print(f'rsu_previews_data reset complete!')
             except Exception as e:
-                print(e, "rsu_previews_data reset NOT complete!")
-        print(f'Итерация пройдена {time_now_str} {today}, ожидание следующей. Запуск через 2 минуты.')
+                print(e, "\nrsu_previews_data reset NOT complete!\n")
+        print(f'Итерация пройдена {time_now_str} {today}, ожидание следующей. Запуск через 2 минуты.\n')
         time.sleep(2 * 60)  # период ожидания след итерации
 
 

@@ -1,0 +1,2 @@
+python freeze_restarter.py
+pause
